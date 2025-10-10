@@ -16,23 +16,13 @@
 
 #import <Foundation/Foundation.h>
 
-NS_ASSUME_NONNULL_BEGIN
-
-/**
- * Provides manual control for installing the scanner. Call +installScanner from your AppDelegate
- * to attach the scanner when you want.
- */
-@interface GSCXAutoInstaller : NSObject
-
-/**
- * Installs the scanner UI. Call this method from your AppDelegate's
- * application:didFinishLaunchingWithOptions: method.
- *
- * @note This method can be called multiple times safely. Subsequent calls will be ignored.
- * @return YES if the scanner was installed, NO if it was already installed.
- */
-+ (BOOL)installScanner;
-
-@end
-
-NS_ASSUME_NONNULL_END
+// Public API headers
+#import "GSCXAutoInstaller.h"
+#import "GSCXInstaller.h"
+#import "GSCXInstallerOptions.h"
+#import "GSCXScanner.h"
+#import "GSCXScannerDelegate.h"
+#import "GSCXScannerOverlayWindow.h"
+#import "GSCXScannerOverlayViewController.h"
+#import "GSCXContinuousScanner.h"
+#import "GSCXAnalytics.h"

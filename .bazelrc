@@ -1,0 +1,25 @@
+# Common build settings
+build --enable_platform_specific_config
+build --incompatible_strict_action_env
+build --experimental_convenience_symlinks=ignore
+
+# iOS specific settings
+build:ios --apple_platform_type=ios
+build:ios --cpu=ios_arm64
+
+# Simulator settings
+build:ios_sim --apple_platform_type=ios
+build:ios_sim --cpu=ios_sim_arm64
+
+# Debug build settings
+build:debug --compilation_mode=dbg
+build:debug --features=apple.propagate_embedded_extra_outputs
+
+# Release build settings
+build:release --compilation_mode=opt
+
+# Xcode project generation settings
+build:xcodeproj --repo_env=RULES_XCODEPROJ_BUILD_MODE=xcode
+
+# Try to import user-specific settings
+try-import %workspace%/.bazelrc.user

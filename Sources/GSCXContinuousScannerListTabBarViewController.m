@@ -43,10 +43,35 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)viewDidLoad {
   [super viewDidLoad];
+
   // The tab bar needs to be opaque, otherwise the list view is displayed under it on iOS 10. The
   // content inset is not set correctly in this case, so some of the list cannot be scrolled into
   // view.
   self.tabBar.translucent = NO;
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+  [super viewWillAppear:animated];
+
+  // Configure navigation bar with blue background and white text
+  // Do this in viewWillAppear to ensure navigation controller is available
+  if (@available(iOS 13.0, *)) {
+    UINavigationBarAppearance *appearance = [[UINavigationBarAppearance alloc] init];
+    [appearance configureWithOpaqueBackground];
+    appearance.backgroundColor = [UIColor systemBlueColor];
+    appearance.titleTextAttributes = @{NSForegroundColorAttributeName: [UIColor whiteColor]};
+    appearance.largeTitleTextAttributes = @{NSForegroundColorAttributeName: [UIColor whiteColor]};
+
+    // Apply to both navigation item and navigation bar
+    self.navigationItem.standardAppearance = appearance;
+    self.navigationItem.scrollEdgeAppearance = appearance;
+
+    if (self.navigationController) {
+      self.navigationController.navigationBar.standardAppearance = appearance;
+      self.navigationController.navigationBar.scrollEdgeAppearance = appearance;
+      self.navigationController.navigationBar.tintColor = [UIColor whiteColor];
+    }
+  }
 }
 
 #pragma mark - Private
@@ -66,7 +91,20 @@ NS_ASSUME_NONNULL_BEGIN
   for (GSCXContinuousScannerListTabBarItem *item in items) {
     GSCXContinuousScannerListViewController *viewController =
         [[GSCXContinuousScannerListViewController alloc] initWithSections:item.sections];
-    viewController.tabBarItem = [[UITabBarItem alloc] initWithTitle:item.title image:nil tag:tag];
+
+    // Add SF Symbols icons for tab bar items (iOS 13+)
+    UIImage *tabIcon = nil;
+    if (@available(iOS 13.0, *)) {
+      if (tag == 0) {
+        // "By Scan" tab - use photo icon
+        tabIcon = [UIImage systemImageNamed:@"photo.on.rectangle"];
+      } else if (tag == 1) {
+        // "By Check" tab - use checkmark list icon
+        tabIcon = [UIImage systemImageNamed:@"checklist"];
+      }
+    }
+
+    viewController.tabBarItem = [[UITabBarItem alloc] initWithTitle:item.title image:tabIcon tag:tag];
     tag++;
     [viewControllers addObject:viewController];
   }

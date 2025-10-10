@@ -68,7 +68,7 @@ FOUNDATION_EXTERN const CGFloat kGSCXSettingsCornerRadius;
 /**
  * Contains the UI for manually triggering a scan on an application.
  */
-@interface GSCXScannerOverlayViewController : UIViewController <GSCXContinuousScannerDelegate>
+@interface GSCXScannerOverlayViewController : UIViewController <GSCXContinuousScannerDelegate, UIAdaptivePresentationControllerDelegate>
 
 /**
  * The scanner used to check the application for issues. It is the responsibility of this object's
@@ -121,6 +121,11 @@ FOUNDATION_EXTERN const CGFloat kGSCXSettingsCornerRadius;
                          bundle:(nullable NSBundle *)bundle
            accessibilityEnabled:(BOOL)accessibilityEnabled
       isMultiWindowPresentation:(BOOL)isMultiWindowPresentation NS_DESIGNATED_INITIALIZER;
+
+/**
+ * Called when the settings button is pressed. Exposed for SwiftUI integration.
+ */
+- (void)gscx_settingsButtonPressed:(nullable id)sender;
 
 @end
 

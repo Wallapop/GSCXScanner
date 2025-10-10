@@ -112,13 +112,34 @@ static const CGFloat kGSCXScannerScreenshotPadding = 0.0;
 - (void)viewDidLoad {
   [super viewDidLoad];
 
+  // Set view background to white (fixes the dark card issue)
+  if (@available(iOS 13.0, *)) {
+    self.view.backgroundColor = [UIColor systemBackgroundColor];
+  } else {
+    self.view.backgroundColor = [UIColor whiteColor];
+  }
+
   self.screenshot = [[UIImageView alloc] initWithImage:self.scanResult.screenshot];
   [self gscx_addScreenshotToScreen:self.screenshot];
-  NSBundle *shareImageBundle =
-      [NSBundle bundleForClass:[GSCXScannerScreenshotViewController class]];
-  UIImage *shareImage = [UIImage imageNamed:kGSCXShareIconImageName
-                                   inBundle:shareImageBundle
-              compatibleWithTraitCollection:nil];
+
+  // Configure navigation bar with blue background and white text
+  if (@available(iOS 13.0, *)) {
+    UINavigationBarAppearance *appearance = [[UINavigationBarAppearance alloc] init];
+    [appearance configureWithOpaqueBackground];
+    appearance.backgroundColor = [UIColor systemBlueColor];
+    appearance.titleTextAttributes = @{NSForegroundColorAttributeName: [UIColor whiteColor]};
+    appearance.largeTitleTextAttributes = @{NSForegroundColorAttributeName: [UIColor whiteColor]};
+    self.navigationItem.standardAppearance = appearance;
+    self.navigationItem.scrollEdgeAppearance = appearance;
+    self.navigationController.navigationBar.tintColor = [UIColor whiteColor];
+  }
+
+  // Use SF Symbols system icon for share (iOS 13+)
+  UIImage *shareImage = nil;
+  if (@available(iOS 13.0, *)) {
+    shareImage = [UIImage systemImageNamed:@"square.and.arrow.up"];
+  }
+
   UIBarButtonItem *shareButton =
       [[UIBarButtonItem alloc] initWithImage:shareImage
                                        style:UIBarButtonItemStylePlain
@@ -126,6 +147,7 @@ static const CGFloat kGSCXScannerScreenshotPadding = 0.0;
                                       action:@selector(gscx_beginSharingIssues)];
   shareButton.accessibilityLabel = kGSCXShareIconAccessibilityLabel;
   shareButton.accessibilityIdentifier = kGSCXShareReportButtonAccessibilityIdentifier;
+  shareButton.tintColor = [UIColor whiteColor];
   self.navigationItem.rightBarButtonItem = shareButton;
 }
 

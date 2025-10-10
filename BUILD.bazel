@@ -1,6 +1,7 @@
 load("@rules_apple//apple:apple.bzl", "apple_static_library", "apple_static_xcframework")
-load("@rules_apple//apple:ios.bzl", "ios_static_framework")
+load("@rules_apple//apple:ios.bzl", "ios_application", "ios_static_framework")
 load("@rules_apple//apple:resources.bzl", "apple_resource_bundle")
+load("@rules_swift//swift:swift.bzl", "swift_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -12,6 +13,16 @@ apple_resource_bundle(
     resources = glob(["Assets.xcassets/**"]),
 )
 
+# SwiftUI button component
+swift_library(
+    name = "gscx_scanner_swift",
+    srcs = glob(["Sources/**/*.swift"]),
+    module_name = "GSCXScannerSwiftUI",
+    generates_header = True,
+    generated_header_name = "GSCXScanner-Swift.h",
+    deps = [],
+)
+
 objc_library(
     name = "gscx_scanner_objc",
     srcs = glob(["Sources/**/*.m"]) + glob(
@@ -19,20 +30,27 @@ objc_library(
         allow_empty = True,
     ),
     hdrs = glob(["Sources/**/*.h"]),
-    data = glob(["Sources/**/*.xib"]),
+    data = glob(["Sources/**/*.xib"]) + [":gscx_assets"],
     includes = ["Sources"],
-    deps = ["@gtxilib//:gtx_objc_core"],
+    deps = [
+        ":gscx_scanner_swift",
+        "@gtxilib//:gtx_objc_core",
+    ],
     enable_modules = True,
     module_name = "GSCXScanner",
     sdk_frameworks = [
         "QuartzCore",
         "UIKit",
+        "SwiftUI",
     ],
 )
 
 apple_static_library(
     name = "GSCXScanner",
-    deps = [":gscx_scanner_objc"],
+    deps = [
+        ":gscx_scanner_objc",
+        ":gscx_assets",
+    ],
     minimum_os_version = "10.0",
     platform_type = "ios",
 )
@@ -42,7 +60,12 @@ ios_static_framework(
     name = "GSCXScanner_framework",
     bundle_name = "GSCXScanner",
     minimum_os_version = "12.0",
-    deps = [":gscx_scanner_objc"],
+    hdrs = glob(["Sources/**/*.h"]),
+    umbrella_header = "Sources/GSCXScanner-umbrella.h",
+    deps = [
+        ":gscx_scanner_objc",
+        ":gscx_assets",
+    ],
 )
 
 # XCFramework combining device and simulator builds
@@ -56,11 +79,13 @@ apple_static_xcframework(
     minimum_os_versions = {
         "ios": "12.0",
     },
-    deps = [":gscx_scanner_objc"],
-    umbrella_header = "Sources/GSCXScanner.h",
+    deps = [
+        ":gscx_scanner_objc",
+        ":gscx_assets",
+    ],
+    umbrella_header = "Sources/GSCXScanner-umbrella.h",
     public_hdrs = glob(
         ["Sources/**/*.h"],
         exclude = ["Sources/GSCXScanner.h"],  # Exclude umbrella header from public_hdrs
     ),
-    avoid_deps = [":gscx_assets"],
 )

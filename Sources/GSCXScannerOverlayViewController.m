@@ -34,6 +34,7 @@
 #import "UIView+GSCXAppearance.h"
 #import "UIViewController+GSCXAppearance.h"
 #import "GTXiLib.h"
+#import "GSCXScanner-Swift.h"
 NS_ASSUME_NONNULL_BEGIN
 
 // TODO: Localize these strings and load them from an external resource instead of
@@ -218,15 +219,19 @@ static NSString *const kGSCXSettingsButtonTitleContinuousScanningInactive = @"Sc
 
   self.settingsButton.accessibilityIdentifier =
       kGSCXScannerOverlaySettingsButtonAccessibilityIdentifier;
-  self.settingsButton.titleLabel.adjustsFontSizeToFitWidth = YES;
-  self.settingsButton.titleLabel.adjustsFontForContentSizeCategory = YES;
-  self.settingsButton.titleLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleBody];
-  self.settingsButtonBlur.layer.borderWidth = 1.0;
-  self.settingsButtonBlur.layer.cornerRadius = kGSCXSettingsCornerRadius;
+
+  // Configure button as circular with icon
+  [self gscx_configureCircularButton];
+
+  // Configure blur view as circular
+  self.settingsButtonBlur.layer.borderWidth = 2.0;
+  self.settingsButtonBlur.layer.cornerRadius = 30.0; // Half of 60x60
   self.settingsButtonBlur.translatesAutoresizingMaskIntoConstraints = NO;
   self.settingsButtonBlur.clipsToBounds = YES;
-  [self gscx_setSettingsAttributedTitleToText:kGSCXSettingsButtonTitleContinuousScanningInactive];
+
+  [self gscx_setButtonIconForCurrentState];
   [self gscx_setSettingsButtonColorForCurrentAppearance];
+
   self.settingsButton.translatesAutoresizingMaskIntoConstraints = NO;
   self.settingsButtonArranger =
       [[GSCXOverlayViewArranger alloc] initWithView:self.settingsButtonBlur container:self];
@@ -245,6 +250,7 @@ static NSString *const kGSCXSettingsButtonTitleContinuousScanningInactive = @"Sc
 - (void)traitCollectionDidChange:(nullable UITraitCollection *)previousTraitCollection {
   [super traitCollectionDidChange:previousTraitCollection];
   [self gscx_setSettingsButtonColorForCurrentAppearance];
+  [self gscx_setButtonIconForCurrentState];
 }
 
 - (void)presentViewController:(UIViewController *)viewControllerToPresent
@@ -268,13 +274,70 @@ static NSString *const kGSCXSettingsButtonTitleContinuousScanningInactive = @"Sc
   return [self.resultsWindowCoordinator windowsToScan];
 }
 
+#pragma mark - UIAdaptivePresentationControllerDelegate
+
+- (void)presentationControllerDidDismiss:(UIPresentationController *)presentationController {
+  // Called when user swipes down to dismiss the pageSheet
+  // This ensures the results window is properly cleaned up
+  [self.resultsWindowCoordinator dismissResultsWindow];
+}
+
 #pragma mark - Private
 
-- (IBAction)gscx_settingsButtonPressed:(id)sender {
+- (IBAction)gscx_settingsButtonPressed:(nullable id)sender {
   if ([self.continuousScanner isScanning]) {
     [self gscx_stopContinuousScanningAndPresentResults];
     return;
   }
+
+  // Use SwiftUI version on iOS 13+
+  if (@available(iOS 13.0, *)) {
+    [self gscx_presentSwiftUISettings];
+  } else {
+    [self gscx_presentUIKitSettings];
+  }
+}
+
+- (void)gscx_presentSwiftUISettings API_AVAILABLE(ios(13.0)) {
+  __weak __typeof__(self) weakSelf = self;
+
+  // We need to create a mutable variable to hold the controller so we can reference it in the blocks
+  __block GSCXScannerSettingsHostingController *settingsController = nil;
+
+  // Create SwiftUI hosting controller with actions that have access to the controller
+  settingsController =
+      [GSCXScannerSettingsHostingController
+          createWithActionsWithInitialFrame:self.settingsButtonBlur.frame
+                          performScanAction:^{
+                            __typeof__(self) strongSelf = weakSelf;
+                            if (strongSelf && settingsController) {
+                              [strongSelf dismissViewControllerAnimated:YES completion:^{
+                                [strongSelf gscx_performScan];
+                              }];
+                            }
+                          }
+                  startContinuousScanAction:^{
+                            __typeof__(self) strongSelf = weakSelf;
+                            if (strongSelf && settingsController) {
+                              [strongSelf dismissViewControllerAnimated:YES completion:^{
+                                [strongSelf gscx_startContinuousScanning];
+                              }];
+                            }
+                          }
+                              dismissAction:^{
+                                // Dismiss action is handled by dismissBlock
+                              }];
+
+  settingsController.dismissBlock = ^(GSCXScannerSettingsHostingController *controller) {
+    [weakSelf gscx_dismissSwiftUISettingsController:controller];
+  };
+
+  [self presentViewController:settingsController
+                     animated:YES
+                   completion:nil];
+}
+
+- (void)gscx_presentUIKitSettings {
   // TODO: Add a text item that acts as the title of the modal so users know they
   // have entered the scanner settings page. textItemWithText will need to be updated to allow
   // custom formatting. Otherwise, the text and the buttons will look too similar, confusing
@@ -300,23 +363,30 @@ static NSString *const kGSCXSettingsButtonTitleContinuousScanningInactive = @"Sc
       [[GSCXScannerSettingsViewController alloc] initWithInitialFrame:self.settingsButtonBlur.frame
                                                                 items:items
                                                               scanner:self.scanner];
-  settingsController.modalPresentationStyle = UIModalPresentationFullScreen;
+  settingsController.modalPresentationStyle = UIModalPresentationPageSheet;
+  if (@available(iOS 15.0, *)) {
+    UISheetPresentationController *sheet = settingsController.sheetPresentationController;
+    if (sheet) {
+      sheet.detents = @[
+        [UISheetPresentationControllerDetent mediumDetent],
+        [UISheetPresentationControllerDetent largeDetent]
+      ];
+      sheet.prefersGrabberVisible = YES;
+    }
+  }
   __weak __typeof__(self) weakSelf = self;
   settingsController.dismissBlock = ^(GSCXScannerSettingsViewController *settingsController) {
     [weakSelf gscx_dismissSettingsControllerWithCompletion:nil];
   };
   [self.settingsControllers addObject:settingsController];
   [self presentViewController:settingsController
-                     animated:NO
-                   completion:^{
-                     __typeof__(self) strongSelf = weakSelf;
-                     if (strongSelf) {
-                       if (!strongSelf.isMultiWindowPresentation) {
-                         strongSelf.view.hidden = YES;
-                       }
-                       [settingsController animateInWithCompletion:nil];
-                     }
-                   }];
+                     animated:YES
+                   completion:nil];
+}
+
+- (void)gscx_dismissSwiftUISettingsController:(GSCXScannerSettingsHostingController *)controller
+    API_AVAILABLE(ios(13.0)) {
+  [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (IBAction)gscx_dragSettingsButton:(UIGestureRecognizer *)gestureRecognizer {
@@ -326,8 +396,10 @@ static NSString *const kGSCXSettingsButtonTitleContinuousScanningInactive = @"Sc
 - (void)gscx_setSettingsButtonColorForCurrentAppearance {
   self.settingsButtonBlur.effect =
       [UIBlurEffect effectWithStyle:[self gscx_blurEffectStyleForCurrentAppearance]];
-  // Set the title to the current text to set the color without changing the text.
-  [self gscx_setSettingsAttributedTitleToText:self.settingsButton.titleLabel.attributedText.string];
+
+  // Update button tint color for the icon
+  self.settingsButton.tintColor = [self gscx_textColorForCurrentAppearance];
+
   if (@available(iOS 12.0, *)) {
     if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
       self.settingsButtonBlur.layer.borderColor = [[UIColor whiteColor] CGColor];
@@ -362,8 +434,29 @@ static NSString *const kGSCXSettingsButtonTitleContinuousScanningInactive = @"Sc
   [self gscx_updateNavigationItemForResultsViewController:screenshotController];
   UINavigationController *navController =
       [[UINavigationController alloc] initWithRootViewController:screenshotController];
-  navController.modalPresentationStyle = UIModalPresentationFullScreen;
+  navController.modalPresentationStyle = UIModalPresentationPageSheet;
+
+  // Set navigation controller and sheet background to white (fixes dark background)
+  if (@available(iOS 13.0, *)) {
+    navController.view.backgroundColor = [UIColor systemBackgroundColor];
+  } else {
+    navController.view.backgroundColor = [UIColor whiteColor];
+  }
+
+  if (@available(iOS 15.0, *)) {
+    UISheetPresentationController *sheet = navController.sheetPresentationController;
+    if (sheet) {
+      sheet.detents = @[
+        [UISheetPresentationControllerDetent largeDetent]
+      ];
+      sheet.prefersGrabberVisible = YES;
+      // Set preferred corner radius and dimming
+      sheet.preferredCornerRadius = 16.0;
+      sheet.largestUndimmedDetentIdentifier = nil; // Dims content behind
+    }
+  }
   navController.navigationBar.translucent = NO;
+  navController.presentationController.delegate = self;
   [self presentViewController:navController animated:true completion:nil];
 }
 
@@ -391,11 +484,21 @@ static NSString *const kGSCXSettingsButtonTitleContinuousScanningInactive = @"Sc
                                        style:UIBarButtonItemStylePlain
                                       target:nil
                                       action:nil];
-  viewController.navigationItem.leftBarButtonItem =
-      [[UIBarButtonItem alloc] initWithTitle:kGSCXScannerOverlayDismissButtonText
-                                       style:UIBarButtonItemStyleDone
+
+  // Use X icon for dismiss button (iOS 13+)
+  UIImage *dismissImage = nil;
+  if (@available(iOS 13.0, *)) {
+    dismissImage = [UIImage systemImageNamed:@"xmark"];
+  }
+
+  UIBarButtonItem *dismissButton =
+      [[UIBarButtonItem alloc] initWithImage:dismissImage
+                                       style:UIBarButtonItemStylePlain
                                       target:self
                                       action:@selector(gscx_dismissResultsWindow:)];
+  dismissButton.accessibilityLabel = @"Close";
+  dismissButton.tintColor = [UIColor whiteColor];
+  viewController.navigationItem.leftBarButtonItem = dismissButton;
 }
 
 - (void)gscx_dismissResultsWindow:(nullable id)sender {
@@ -403,20 +506,11 @@ static NSString *const kGSCXSettingsButtonTitleContinuousScanningInactive = @"Sc
 }
 
 - (void)gscx_dismissSettingsControllerWithCompletion:(nullable void (^)(void))completion {
-  __weak __typeof__(self) weakSelf = self;
   GSCXScannerSettingsViewController *settingsController = [self.settingsControllers lastObject];
   GTX_ASSERT(settingsController != nil,
              @"Cannot dismiss settings controller with no visible settings controllers.");
   [self.settingsControllers removeLastObject];
-  [settingsController animateOutWithCompletion:^(BOOL finished) {
-    __typeof__(self) strongSelf = weakSelf;
-    if (strongSelf) {
-      if (!strongSelf.isMultiWindowPresentation) {
-        strongSelf.view.hidden = NO;
-      }
-      [strongSelf dismissViewControllerAnimated:NO completion:completion];
-    }
-  }];
+  [self dismissViewControllerAnimated:YES completion:completion];
 }
 
 - (void)gscx_performScanButtonPressed:(id)sender {
@@ -447,8 +541,29 @@ static NSString *const kGSCXSettingsButtonTitleContinuousScanningInactive = @"Sc
   [self gscx_updateNavigationItemForResultsViewController:viewController];
   UINavigationController *navigationController =
       [[UINavigationController alloc] initWithRootViewController:viewController];
-  navigationController.modalPresentationStyle = UIModalPresentationFullScreen;
+  navigationController.modalPresentationStyle = UIModalPresentationPageSheet;
+
+  // Set navigation controller and sheet background to white (fixes dark background)
+  if (@available(iOS 13.0, *)) {
+    navigationController.view.backgroundColor = [UIColor systemBackgroundColor];
+  } else {
+    navigationController.view.backgroundColor = [UIColor whiteColor];
+  }
+
+  if (@available(iOS 15.0, *)) {
+    UISheetPresentationController *sheet = navigationController.sheetPresentationController;
+    if (sheet) {
+      sheet.detents = @[
+        [UISheetPresentationControllerDetent largeDetent]
+      ];
+      sheet.prefersGrabberVisible = YES;
+      // Set preferred corner radius and dimming
+      sheet.preferredCornerRadius = 16.0;
+      sheet.largestUndimmedDetentIdentifier = nil; // Dims content behind
+    }
+  }
   navigationController.navigationBar.translucent = NO;
+  navigationController.presentationController.delegate = self;
   [self presentViewController:navigationController animated:YES completion:nil];
 }
 
@@ -469,7 +584,7 @@ static NSString *const kGSCXSettingsButtonTitleContinuousScanningInactive = @"Sc
   GTX_ASSERT(![self.continuousScanner isScanning],
              @"Cannot start scanning while already scanning.");
   [self.continuousScanner startScanning];
-  [self gscx_setSettingsAttributedTitleToText:kGSCXSettingsButtonTitleContinuousScanningActive];
+  [self gscx_setButtonIconForCurrentState];
 }
 
 /**
@@ -479,8 +594,8 @@ static NSString *const kGSCXSettingsButtonTitleContinuousScanningInactive = @"Sc
  */
 - (void)gscx_stopContinuousScanningAndPresentResults {
   GTX_ASSERT([self.continuousScanner isScanning], @"Cannot stop scanning while not scanning.");
-  [self gscx_setSettingsAttributedTitleToText:kGSCXSettingsButtonTitleContinuousScanningInactive];
   [self.continuousScanner stopScanning];
+  [self gscx_setButtonIconForCurrentState];
   if ([self.continuousScanner issueCount] == 0) {
     [self gscx_presentNoIssuesFoundAlert];
     return;
@@ -502,6 +617,59 @@ static NSString *const kGSCXSettingsButtonTitleContinuousScanningInactive = @"Sc
   NSAttributedString *title = [[NSAttributedString alloc] initWithString:text
                                                               attributes:attributes];
   [self.settingsButton setAttributedTitle:title forState:UIControlStateNormal];
+}
+
+/**
+ * Configures the button to be circular with proper constraints and removes the title.
+ */
+- (void)gscx_configureCircularButton {
+  // Remove any existing title
+  [self.settingsButton setTitle:nil forState:UIControlStateNormal];
+  [self.settingsButton setAttributedTitle:nil forState:UIControlStateNormal];
+
+  // The button will display only an icon, no text
+  self.settingsButton.tintColor = [self gscx_textColorForCurrentAppearance];
+}
+
+/**
+ * Updates the button icon based on the current scanning state.
+ */
+- (void)gscx_setButtonIconForCurrentState {
+  UIImage *iconImage;
+  NSString *accessibilityLabel;
+
+  BOOL isScanning = self.continuousScanner != nil && [self.continuousScanner isScanning];
+
+  if (isScanning) {
+    // Use stop icon when scanning (iOS 13+)
+    if (@available(iOS 13.0, *)) {
+      UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration
+          configurationWithPointSize:24 weight:UIImageSymbolWeightMedium];
+      iconImage = [UIImage systemImageNamed:@"stop.circle.fill" withConfiguration:config];
+      accessibilityLabel = @"Stop Scanning";
+    }
+  } else {
+    // Use accessibility icon when not scanning
+    if (@available(iOS 14.0, *)) {
+      UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration
+          configurationWithPointSize:24 weight:UIImageSymbolWeightMedium];
+      iconImage = [UIImage systemImageNamed:@"figure.wave.circle.fill" withConfiguration:config];
+      accessibilityLabel = @"Scanner Menu";
+    } else if (@available(iOS 13.0, *)) {
+      UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration
+          configurationWithPointSize:24 weight:UIImageSymbolWeightMedium];
+      iconImage = [UIImage systemImageNamed:@"person.fill.viewfinder" withConfiguration:config];
+      accessibilityLabel = @"Scanner Menu";
+    }
+  }
+
+  if (iconImage != nil) {
+    [self.settingsButton setImage:iconImage forState:UIControlStateNormal];
+  }
+  if (accessibilityLabel != nil) {
+    self.settingsButton.accessibilityLabel = accessibilityLabel;
+  }
+  self.settingsButton.tintColor = [self gscx_textColorForCurrentAppearance];
 }
 
 @end

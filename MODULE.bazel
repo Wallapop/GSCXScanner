@@ -5,16 +5,25 @@ module(
 )
 
 bazel_dep(name = "platforms", version = "0.0.11")
+bazel_dep(name = "rules_swift", version = "3.1.2", repo_name = "rules_swift")
 bazel_dep(name = "rules_apple", version = "4.2.0", repo_name = "rules_apple")
 bazel_dep(name = "apple_support", version = "1.23.1")
-bazel_dep(name = "rules_swift", version = "3.1.2", repo_name = "rules_swift")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
 bazel_dep(name = "abseil-cpp", version = "20240722.0", repo_name = "absl")
 bazel_dep(name = "tinyxml2", version = "10.0.0", repo_name = "tinyxml2")
+
+# rules_xcodeproj for Xcode project generation
+bazel_dep(name = "rules_xcodeproj", version = "3.2.0", dev_dependency = True)
+
+# Allow different Swift versions
+single_version_override(
+    module_name = "rules_swift",
+    version = "3.1.2",
+)
 
 # GTXiLib dependency - using local path
 bazel_dep(name = "gtxilib", version = "7.1.1")
 local_path_override(
     module_name = "gtxilib",
-    path = "../GTXiLib-master",
+    path = "../GTXiLib",
 )

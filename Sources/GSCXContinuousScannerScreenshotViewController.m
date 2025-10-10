@@ -182,6 +182,19 @@ static const CGFloat kGSCXContinuousScannerScreenshotMinimumLabelHeight = 20.5;
   [super viewDidLoad];
   self.automaticallyAdjustsScrollViewInsets = NO;
   self.view.backgroundColor = [self gscx_backgroundColorForCurrentAppearance];
+
+  // Configure navigation bar with blue background and white text
+  if (@available(iOS 13.0, *)) {
+    UINavigationBarAppearance *appearance = [[UINavigationBarAppearance alloc] init];
+    [appearance configureWithOpaqueBackground];
+    appearance.backgroundColor = [UIColor systemBlueColor];
+    appearance.titleTextAttributes = @{NSForegroundColorAttributeName: [UIColor whiteColor]};
+    appearance.largeTitleTextAttributes = @{NSForegroundColorAttributeName: [UIColor whiteColor]};
+    self.navigationItem.standardAppearance = appearance;
+    self.navigationItem.scrollEdgeAppearance = appearance;
+    self.navigationController.navigationBar.tintColor = [UIColor whiteColor];
+  }
+
   [self gscx_setupRightBarButtonItems];
   self.carousel.carouselView.backgroundColor = [self gscx_backgroundColorForCurrentAppearance];
   self.scrollView.delegate = self;
@@ -200,6 +213,18 @@ static const CGFloat kGSCXContinuousScannerScreenshotMinimumLabelHeight = 20.5;
   self.issueCountLabel.textColor = [self gscx_textColorForCurrentAppearance];
   self.issueCountLabel.adjustsFontSizeToFitWidth = YES;
   self.issueCountLabel.textAlignment = NSTextAlignmentRight;
+  // Set SF Symbols system icons for buttons (iOS 13+)
+  if (@available(iOS 13.0, *)) {
+    [self.backButton setImage:[UIImage systemImageNamed:@"chevron.left"] forState:UIControlStateNormal];
+    [self.nextButton setImage:[UIImage systemImageNamed:@"chevron.right"] forState:UIControlStateNormal];
+    [self.gridButton setImage:[UIImage systemImageNamed:@"square.grid.2x2"] forState:UIControlStateNormal];
+
+    // Set tint color to white for all buttons
+    self.backButton.tintColor = [UIColor whiteColor];
+    self.nextButton.tintColor = [UIColor whiteColor];
+    self.gridButton.tintColor = [UIColor whiteColor];
+  }
+
   self.gridButton.accessibilityIdentifier =
       kGSCXContinuousScannerScreenshotGridButtonAccessibilityIdentifier;
   self.nextButton.accessibilityIdentifier =
@@ -410,14 +435,14 @@ static const CGFloat kGSCXContinuousScannerScreenshotMinimumLabelHeight = 20.5;
  * Initializes the right bar button items in the navigation bar.
  */
 - (void)gscx_setupRightBarButtonItems {
-  NSBundle *imageBundle =
-      [NSBundle bundleForClass:[GSCXContinuousScannerScreenshotViewController class]];
-  UIImage *shareImage = [UIImage imageNamed:kGSCXShareIconImageName
-                                   inBundle:imageBundle
-              compatibleWithTraitCollection:nil];
-  UIImage *listImage = [UIImage imageNamed:kGSCXListIconImageName
-                                  inBundle:imageBundle
-             compatibleWithTraitCollection:nil];
+  // Use SF Symbols system icons (iOS 13+)
+  UIImage *shareImage = nil;
+  UIImage *listImage = nil;
+
+  if (@available(iOS 13.0, *)) {
+    shareImage = [UIImage systemImageNamed:@"square.and.arrow.up"];
+    listImage = [UIImage systemImageNamed:@"list.bullet"];
+  }
   UIBarButtonItem *shareButton =
       [[UIBarButtonItem alloc] initWithImage:shareImage
                                        style:UIBarButtonItemStylePlain
@@ -425,6 +450,8 @@ static const CGFloat kGSCXContinuousScannerScreenshotMinimumLabelHeight = 20.5;
                                       action:@selector(gscx_beginSharingIssues)];
   shareButton.accessibilityLabel = kGSCXShareIconAccessibilityLabel;
   shareButton.accessibilityIdentifier = kGSCXShareReportButtonAccessibilityIdentifier;
+  shareButton.tintColor = [UIColor whiteColor];
+
   UIBarButtonItem *listButton =
       [[UIBarButtonItem alloc] initWithImage:listImage
                                        style:UIBarButtonItemStylePlain
@@ -433,6 +460,8 @@ static const CGFloat kGSCXContinuousScannerScreenshotMinimumLabelHeight = 20.5;
   listButton.accessibilityLabel = kGSCXListIconAccessibilityLabel;
   listButton.accessibilityIdentifier =
       kGSCXContinuousScannerScreenshotListBarButtonAccessibilityIdentifier;
+  listButton.tintColor = [UIColor whiteColor];
+
   self.navigationItem.rightBarButtonItems = @[ shareButton, listButton ];
 }
 

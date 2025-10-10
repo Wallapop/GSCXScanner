@@ -20,69 +20,27 @@
 #import "GTXiLib.h"
 NS_ASSUME_NONNULL_BEGIN
 
-#pragma mark - GSCXAutoInstallerAppListener Interface
-
-/**
- * Listens to app notifications and installs scanner when app is launched.
- */
-@interface GSCXAutoInstallerAppListener : NSObject
-
-/**
- * Begin listening for app notifications.
- */
-+ (void)gscx_startListening;
-
-@end
-
-#pragma mark - GSCXAutoInstallerAppListener Implementation
-
-@implementation GSCXAutoInstallerAppListener {
-  UIWindow *_overlayWindow;
-}
-
-+ (instancetype)gscx_defaultListener {
-  static dispatch_once_t onceToken;
-  static GSCXAutoInstallerAppListener *defaultInstance;
-  dispatch_once(&onceToken, ^{
-    defaultInstance = [[GSCXAutoInstallerAppListener alloc] init];
-  });
-  return defaultInstance;
-}
-
-+ (void)gscx_startListening {
-  NSString *notificationName = UIApplicationDidFinishLaunchingNotification;
-  if (@available(iOS 13.0, *)) {
-    // on iOS 13 and on, all apps use UIScene. Even if the developer does not
-    // manually handle scenes using UISceneDelegate, the operating system still
-    // constructs a scene and sends the did activate notification.
-    notificationName = UISceneDidActivateNotification;
-  }
-  [[NSNotificationCenter defaultCenter]
-      addObserver:[GSCXAutoInstallerAppListener gscx_defaultListener]
-         selector:@selector(applicationDidFinishLaunching:)
-             name:notificationName
-           object:nil];
-}
-
-- (void)applicationDidFinishLaunching:(NSNotification *)notification {
-  if (_overlayWindow != nil) {
-    // In UIScene applications, it is valid for this method to be called multiple times.
-    // Log but do not crash with an assertion.
-    [[GTXLogger defaultLogger] logWithLevel:GTXLogLevelDeveloper
-                                     format:@"iOS Scanner was already installed."];
-    return;
-  }
-  _overlayWindow = [GSCXInstaller installScanner];
-}
-
-@end
-
 #pragma mark - GSCXAutoInstaller Implementation
 
 @implementation GSCXAutoInstaller
 
-+ (void)load {
-  [GSCXAutoInstallerAppListener gscx_startListening];
+static UIWindow *gscx_overlayWindow = nil;
+
++ (BOOL)installScanner {
+  static dispatch_once_t onceToken;
+  __block BOOL wasInstalled = NO;
+  dispatch_once(&onceToken, ^{
+    if (gscx_overlayWindow == nil) {
+      gscx_overlayWindow = [GSCXInstaller installScanner];
+      wasInstalled = YES;
+      [[GTXLogger defaultLogger] logWithLevel:GTXLogLevelDeveloper
+                                       format:@"iOS Scanner installed successfully."];
+    } else {
+      [[GTXLogger defaultLogger] logWithLevel:GTXLogLevelDeveloper
+                                       format:@"iOS Scanner was already installed."];
+    }
+  });
+  return wasInstalled;
 }
 
 @end

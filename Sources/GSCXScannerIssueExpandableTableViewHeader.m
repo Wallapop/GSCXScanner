@@ -49,11 +49,12 @@ NSString *const kGSCXScannerIssueExpandableTableViewHeaderCollapseActionName = @
     [_expandIcon addTarget:self
                     action:@selector(gscx_toggleIsExpanded)
           forControlEvents:UIControlEventTouchUpInside];
-    NSBundle *imageBundle =
-        [NSBundle bundleForClass:[GSCXScannerIssueExpandableTableViewHeader class]];
-    UIImage *iconImage = [UIImage imageNamed:kGSCXExpandIconImageName
-                                    inBundle:imageBundle
-               compatibleWithTraitCollection:nil];
+
+    // Use SF Symbols chevron icon (iOS 13+)
+    UIImage *iconImage = nil;
+    if (@available(iOS 13.0, *)) {
+      iconImage = [UIImage systemImageNamed:@"chevron.down"];
+    }
     [_expandIcon setImage:iconImage forState:UIControlStateNormal];
     _expandIcon.translatesAutoresizingMaskIntoConstraints = NO;
   }
@@ -180,10 +181,13 @@ NSString *const kGSCXScannerIssueExpandableTableViewHeaderCollapseActionName = @
  * @return The image of @c expandIcon for the current value of @c expanded.
  */
 - (UIImage *)gscx_expandIconImage {
-  NSString *imageName = self.isExpanded ? kGSCXCollapseIconImageName : kGSCXExpandIconImageName;
-  NSBundle *imageBundle =
-      [NSBundle bundleForClass:[GSCXScannerIssueExpandableTableViewHeader class]];
-  return [UIImage imageNamed:imageName inBundle:imageBundle compatibleWithTraitCollection:nil];
+  // Use SF Symbols chevron icons (iOS 13+)
+  UIImage *iconImage = nil;
+  if (@available(iOS 13.0, *)) {
+    NSString *systemImageName = self.isExpanded ? @"chevron.up" : @"chevron.down";
+    iconImage = [UIImage systemImageNamed:systemImageName];
+  }
+  return iconImage;
 }
 
 @end

@@ -105,6 +105,19 @@ static const CGFloat kGSCXContinuousScannerPageIndicatorAlpha = 0.2;
 - (void)viewDidLoad {
   [super viewDidLoad];
   self.view.backgroundColor = [self gscx_backgroundColorForCurrentAppearance];
+
+  // Configure navigation bar with blue background and white text
+  if (@available(iOS 13.0, *)) {
+    UINavigationBarAppearance *appearance = [[UINavigationBarAppearance alloc] init];
+    [appearance configureWithOpaqueBackground];
+    appearance.backgroundColor = [UIColor systemBlueColor];
+    appearance.titleTextAttributes = @{NSForegroundColorAttributeName: [UIColor whiteColor]};
+    appearance.largeTitleTextAttributes = @{NSForegroundColorAttributeName: [UIColor whiteColor]};
+    self.navigationItem.standardAppearance = appearance;
+    self.navigationItem.scrollEdgeAppearance = appearance;
+    self.navigationController.navigationBar.tintColor = [UIColor whiteColor];
+  }
+
   [self gscx_initializeScreenshot];
   [self gscx_initializeScreenshotScrollView];
   [self gscx_initializeDetailScrollView];
