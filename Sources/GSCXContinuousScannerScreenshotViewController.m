@@ -30,7 +30,7 @@
 #import "GSCXUtils.h"
 #import "NSLayoutConstraint+GSCXUtilities.h"
 #import "UIViewController+GSCXAppearance.h"
-#import <GTXiLib/GTXiLib.h>
+#import "GTXiLib.h"
 NS_ASSUME_NONNULL_BEGIN
 
 NSString *const kGSCXScannerResultCarouselAccessibilityIdentifier =

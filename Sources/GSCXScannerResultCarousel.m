@@ -20,7 +20,7 @@
 #import "GSCXScannerResultCarouselCollectionViewCell.h"
 #import "GSCXScannerResultCarouselView.h"
 #import "NSLayoutConstraint+GSCXUtilities.h"
-#import <GTXiLib/GTXiLib.h>
+#import "GTXiLib.h"
 /**
  * The reuse identifier for cells in a @c GSCXScannerResultCarousel view.
  */

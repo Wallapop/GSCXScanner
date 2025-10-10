@@ -22,7 +22,7 @@
 
 // All GTXiLib imports are grouped here to help with OSS release script which replaces the below
 // with GTXiLib framework import.
-#import <GTXiLib/GTXiLib.h>
+#import "GTXiLib.h"
 NS_ASSUME_NONNULL_BEGIN
 
 /**

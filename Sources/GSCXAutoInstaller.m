@@ -17,7 +17,7 @@
 #import "GSCXAutoInstaller.h"
 
 #import "GSCXInstaller.h"
-#import <GTXiLib/GTXiLib.h>
+#import "GTXiLib.h"
 NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - GSCXAutoInstallerAppListener Interface

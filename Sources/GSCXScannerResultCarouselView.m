@@ -16,7 +16,7 @@
 
 #import "GSCXScannerResultCarouselView.h"
 
-#import <GTXiLib/GTXiLib.h>
+#import "GTXiLib.h"
 NS_ASSUME_NONNULL_BEGIN
 
 @implementation GSCXScannerResultCarouselView

@@ -16,7 +16,7 @@
 
 #import "GSCXScannerSettingsBlockItem.h"
 
-#import <GTXiLib/GTXiLib.h>
+#import "GTXiLib.h"
 NS_ASSUME_NONNULL_BEGIN
 
 @interface GSCXScannerSettingsBlockItem ()

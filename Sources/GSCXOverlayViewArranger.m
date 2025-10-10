@@ -17,7 +17,7 @@
 #import "GSCXOverlayViewArranger.h"
 
 #import "UIView+NSLayoutConstraint.h"
-#import <GTXiLib/GTXiLib.h>
+#import "GTXiLib.h"
 /**
  * The offset between the the superview being snapped to and the view being snapped, in points.
  */

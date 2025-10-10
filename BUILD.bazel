@@ -1,0 +1,66 @@
+load("@rules_apple//apple:apple.bzl", "apple_static_library", "apple_static_xcframework")
+load("@rules_apple//apple:ios.bzl", "ios_static_framework")
+load("@rules_apple//apple:resources.bzl", "apple_resource_bundle")
+
+package(default_visibility = ["//visibility:public"])
+
+# This BUILD file can be used standalone when GSCXScanner is consumed as a dependency
+
+apple_resource_bundle(
+    name = "gscx_assets",
+    bundle_name = "GSCXScanner",
+    resources = glob(["Assets.xcassets/**"]),
+)
+
+objc_library(
+    name = "gscx_scanner_objc",
+    srcs = glob(["Sources/**/*.m"]) + glob(
+        ["Sources/**/*.mm"],
+        allow_empty = True,
+    ),
+    hdrs = glob(["Sources/**/*.h"]),
+    data = glob(["Sources/**/*.xib"]),
+    includes = ["Sources"],
+    deps = ["@gtxilib//:gtx_objc_core"],
+    enable_modules = True,
+    module_name = "GSCXScanner",
+    sdk_frameworks = [
+        "QuartzCore",
+        "UIKit",
+    ],
+)
+
+apple_static_library(
+    name = "GSCXScanner",
+    deps = [":gscx_scanner_objc"],
+    minimum_os_version = "10.0",
+    platform_type = "ios",
+)
+
+# iOS Static Framework for distribution
+ios_static_framework(
+    name = "GSCXScanner_framework",
+    bundle_name = "GSCXScanner",
+    minimum_os_version = "12.0",
+    deps = [":gscx_scanner_objc"],
+)
+
+# XCFramework combining device and simulator builds
+apple_static_xcframework(
+    name = "GSCXScanner_xcframework",
+    bundle_name = "GSCXScanner",
+    ios = {
+        "simulator": ["x86_64", "arm64"],
+        "device": ["arm64"],
+    },
+    minimum_os_versions = {
+        "ios": "12.0",
+    },
+    deps = [":gscx_scanner_objc"],
+    umbrella_header = "Sources/GSCXScanner.h",
+    public_hdrs = glob(
+        ["Sources/**/*.h"],
+        exclude = ["Sources/GSCXScanner.h"],  # Exclude umbrella header from public_hdrs
+    ),
+    avoid_deps = [":gscx_assets"],
+)

@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#import <GTXiLib/GTXiLib.h>
+#import "GTXiLib.h"
 NS_ASSUME_NONNULL_BEGIN
 
 /**

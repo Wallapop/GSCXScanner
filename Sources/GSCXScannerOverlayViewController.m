@@ -33,7 +33,7 @@
 #import "GSCXTouchActivitySource.h"
 #import "UIView+GSCXAppearance.h"
 #import "UIViewController+GSCXAppearance.h"
-#import <GTXiLib/GTXiLib.h>
+#import "GTXiLib.h"
 NS_ASSUME_NONNULL_BEGIN
 
 // TODO: Localize these strings and load them from an external resource instead of

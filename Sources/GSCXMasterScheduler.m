@@ -17,7 +17,7 @@
 #import <Foundation/Foundation.h>
 
 #import "GSCXMasterScheduler.h"
-#import <GTXiLib/GTXiLib.h>
+#import "GTXiLib.h"
 NS_ASSUME_NONNULL_BEGIN
 
 @interface GSCXMasterScheduler ()

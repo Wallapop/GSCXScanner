@@ -16,7 +16,7 @@
 
 #import "GSCXUtils.h"
 
-#import <GTXiLib/GTXiLib.h>
+#import "GTXiLib.h"
 NS_ASSUME_NONNULL_BEGIN
 
 const CGFloat kGSCXMinimumTouchTargetSize = 44.0;

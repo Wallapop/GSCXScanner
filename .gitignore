@@ -1,3 +1,4 @@
 .DS_Store
 GSCXScanner.xcodeproj/xcuserdata/*
 GSCXScanner.xcodeproj/project.xcworkspace/xcuserdata/*
+bazel-*

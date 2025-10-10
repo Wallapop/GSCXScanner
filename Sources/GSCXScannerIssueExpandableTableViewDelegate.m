@@ -19,7 +19,7 @@
 #import "GSCXScannerIssueExpandableTableViewCell.h"
 #import "GSCXScannerIssueExpandableTableViewHeader.h"
 #import "GSCXUtils.h"
-#import <GTXiLib/GTXiLib.h>
+#import "GTXiLib.h"
 NS_ASSUME_NONNULL_BEGIN
 
 NSString *const kGSCXScannerIssueExpandableTableViewCellReuseIdentifier =
