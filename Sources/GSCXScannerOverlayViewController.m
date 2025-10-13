@@ -282,6 +282,11 @@ static NSString *const kGSCXSettingsButtonTitleContinuousScanningInactive = @"Sc
   [self.resultsWindowCoordinator dismissResultsWindow];
 }
 
+- (BOOL)presentationControllerShouldDismiss:(UIPresentationController *)presentationController
+    API_AVAILABLE(ios(13.0)) {
+  return YES;
+}
+
 #pragma mark - Private
 
 - (IBAction)gscx_settingsButtonPressed:(nullable id)sender {
@@ -332,9 +337,20 @@ static NSString *const kGSCXSettingsButtonTitleContinuousScanningInactive = @"Sc
     [weakSelf gscx_dismissSwiftUISettingsController:controller];
   };
 
+  UIPresentationController *presentationController = settingsController.presentationController;
+  if (presentationController) {
+    presentationController.delegate = self;
+  }
+
   [self presentViewController:settingsController
                      animated:YES
-                   completion:nil];
+                   completion:^{
+                     UIPresentationController *presentedController =
+                         settingsController.presentationController;
+                     if (presentedController && weakSelf) {
+                       presentedController.delegate = weakSelf;
+                     }
+                   }];
 }
 
 - (void)gscx_presentUIKitSettings {
