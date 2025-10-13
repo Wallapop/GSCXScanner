@@ -1,0 +1,10 @@
+framework module GSCXScanner {
+  umbrella header "GSCXScanner-umbrella.h"
+  export *
+  module * { export * }
+  link framework "CoreFoundation"
+  link framework "QuartzCore"
+  link framework "SwiftUI"
+  link framework "UIKit"
+  link framework "Vision"
+}
