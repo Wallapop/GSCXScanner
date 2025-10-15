@@ -9,6 +9,6 @@ Pod::Spec.new do |s|
   s.license      = "Apache License 2.0"
   s.author       = "j-sid"
   s.platform     = :ios, "10.0"
-  s.source       = { :http => "https://github.com/Wallapop/GSCXScanner/releases/download/4.0.2-5-g5327240/GSCXScanner.framework.zip" }
+  s.source       = { :http => "file:///Users/mostafa.essam/Downloads/GTX/GSCXScanner-master/release/GSCXScanner.framework.zip" }
   s.vendored_frameworks = "GSCXScanner.framework"
 end
