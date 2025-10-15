@@ -58,9 +58,7 @@ public struct GSCXScannerSettingsView: View {
                     }
                 }
             }
-            .onAppear {
-                configureNavigationBarAppearance()
-            }
+            .colorScheme(.light)
             .accessibilityAction(.escape) {
                 onDismiss()
             }
@@ -88,9 +86,6 @@ public struct GSCXScannerSettingsView: View {
                     }
                 )
             }
-            .onAppear {
-                configureNavigationBarAppearance()
-            }
             .accessibilityAction(.escape) {
                 onDismiss()
             }
@@ -104,19 +99,15 @@ public struct GSCXScannerSettingsView: View {
         appearance.backgroundColor = UIColor.systemBlue
         appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
         appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
-
-        UINavigationBar.appearance().standardAppearance = appearance
-        UINavigationBar.appearance().scrollEdgeAppearance = appearance
-        UINavigationBar.appearance().compactAppearance = appearance
-        UINavigationBar.appearance().tintColor = .white
     }
 
     /// Filters out the dismiss button from the items list
     private var filteredItems: [GSCXSettingsItemModel] {
         items.filter { item in
             // Filter out dismiss button items based on accessibility identifier
-            if case .button(_, _, let identifier) = item,
-               identifier == "kGSCXDismissSettingsAccessibilityIdentifier" {
+            if case let .button(_, _, identifier) = item,
+               identifier == "kGSCXDismissSettingsAccessibilityIdentifier"
+            {
                 return false
             }
             return true
@@ -141,15 +132,42 @@ public struct GSCXScannerSettingsView: View {
 
 // MARK: - Visual Effect Blur (iOS 13-14 Fallback)
 
+var globalLook: NavigationBarAppearanceSnapshot?
+@available(iOS 13.0, *)
+public struct NavigationBarAppearanceSnapshot {
+    let standard: UINavigationBarAppearance
+    let scrollEdge: UINavigationBarAppearance?
+    let compact: UINavigationBarAppearance?
+    let tintColor: UIColor?
+
+    static func capture() -> NavigationBarAppearanceSnapshot {
+        let navigationBar = UINavigationBar.appearance()
+        return NavigationBarAppearanceSnapshot(
+            standard: navigationBar.standardAppearance,
+            scrollEdge: navigationBar.scrollEdgeAppearance,
+            compact: navigationBar.compactAppearance,
+            tintColor: navigationBar.tintColor
+        )
+    }
+
+    public func restore() {
+        let navigationBar = UINavigationBar.appearance()
+        navigationBar.standardAppearance = standard
+        navigationBar.scrollEdgeAppearance = scrollEdge
+        navigationBar.compactAppearance = compact
+        navigationBar.tintColor = tintColor
+    }
+}
+
 @available(iOS 13.0, *)
 private struct VisualEffectBlur: UIViewRepresentable {
     let blurStyle: UIBlurEffect.Style
 
-    func makeUIView(context: Context) -> UIVisualEffectView {
+    func makeUIView(context _: Context) -> UIVisualEffectView {
         return UIVisualEffectView(effect: UIBlurEffect(style: blurStyle))
     }
 
-    func updateUIView(_ uiView: UIVisualEffectView, context: Context) {
+    func updateUIView(_ uiView: UIVisualEffectView, context _: Context) {
         uiView.effect = UIBlurEffect(style: blurStyle)
     }
 }
@@ -183,69 +201,69 @@ private struct AccessibilityIdentifierModifier: ViewModifier {
 // MARK: - Previews
 
 #if DEBUG
-@available(iOS 14.0, *)
-struct GSCXScannerSettingsView_Previews: PreviewProvider {
-    static var previews: some View {
-        ZStack {
-            // Simulated app background
-            Color.blue
-                .ignoresSafeArea()
+    @available(iOS 14.0, *)
+    struct GSCXScannerSettingsView_Previews: PreviewProvider {
+        static var previews: some View {
+            ZStack {
+                // Simulated app background
+                Color.blue
+                    .ignoresSafeArea()
 
-            GSCXScannerSettingsView(
-                items: [
-                    .buttonItem(
-                        title: "Scan Current Screen",
-                        accessibilityIdentifier: "kGSCXPerformScanAccessibilityIdentifier",
-                        action: { print("Scan") }
-                    ),
-                    .buttonItem(
-                        title: "Start Continuous Scanning",
-                        accessibilityIdentifier: "kGSCXSettingsContinuousScanButtonAccessibilityIdentifier",
-                        action: { print("Start continuous") }
-                    ),
-                    .toggleItem(
-                        label: "Enable Feature",
-                        isOn: true,
-                        onChange: { _ in print("Toggle changed") }
-                    ),
-                    .textItem(content: "No issues found"),
-                    .buttonItem(
-                        title: "Dismiss",
-                        accessibilityIdentifier: "kGSCXDismissSettingsAccessibilityIdentifier",
-                        action: { print("Dismiss") }
-                    ),
-                ],
-                onDismiss: { print("Dismissed") }
-            )
+                GSCXScannerSettingsView(
+                    items: [
+                        .buttonItem(
+                            title: "Scan Current Screen",
+                            accessibilityIdentifier: "kGSCXPerformScanAccessibilityIdentifier",
+                            action: { print("Scan") }
+                        ),
+                        .buttonItem(
+                            title: "Start Continuous Scanning",
+                            accessibilityIdentifier: "kGSCXSettingsContinuousScanButtonAccessibilityIdentifier",
+                            action: { print("Start continuous") }
+                        ),
+                        .toggleItem(
+                            label: "Enable Feature",
+                            isOn: true,
+                            onChange: { _ in print("Toggle changed") }
+                        ),
+                        .textItem(content: "No issues found"),
+                        .buttonItem(
+                            title: "Dismiss",
+                            accessibilityIdentifier: "kGSCXDismissSettingsAccessibilityIdentifier",
+                            action: { print("Dismiss") }
+                        ),
+                    ],
+                    onDismiss: { print("Dismissed") }
+                )
+            }
+            .previewDisplayName("Light Mode")
+
+            ZStack {
+                // Simulated app background
+                Color.blue
+                    .ignoresSafeArea()
+
+                GSCXScannerSettingsView(
+                    items: [
+                        .buttonItem(
+                            title: "Scan Current Screen",
+                            action: { print("Scan") }
+                        ),
+                        .buttonItem(
+                            title: "Start Continuous Scanning",
+                            action: { print("Start continuous") }
+                        ),
+                        .textItem(content: "Continuous Scan Report Empty."),
+                        .buttonItem(
+                            title: "Dismiss",
+                            action: { print("Dismiss") }
+                        ),
+                    ],
+                    onDismiss: { print("Dismissed") }
+                )
+            }
+            .preferredColorScheme(.dark)
+            .previewDisplayName("Dark Mode")
         }
-        .previewDisplayName("Light Mode")
-
-        ZStack {
-            // Simulated app background
-            Color.blue
-                .ignoresSafeArea()
-
-            GSCXScannerSettingsView(
-                items: [
-                    .buttonItem(
-                        title: "Scan Current Screen",
-                        action: { print("Scan") }
-                    ),
-                    .buttonItem(
-                        title: "Start Continuous Scanning",
-                        action: { print("Start continuous") }
-                    ),
-                    .textItem(content: "Continuous Scan Report Empty."),
-                    .buttonItem(
-                        title: "Dismiss",
-                        action: { print("Dismiss") }
-                    ),
-                ],
-                onDismiss: { print("Dismissed") }
-            )
-        }
-        .preferredColorScheme(.dark)
-        .previewDisplayName("Dark Mode")
     }
-}
 #endif

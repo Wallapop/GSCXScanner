@@ -20,7 +20,6 @@ import UIKit
 /// UIKit hosting controller for the SwiftUI scanner settings view
 @available(iOS 13.0, *)
 @objc public class GSCXScannerSettingsHostingController: UIViewController, GSCXScannerSettingsViewDelegate {
-
     // MARK: - Properties
 
     private var hostingController: UIHostingController<GSCXScannerSettingsView>?
@@ -54,13 +53,14 @@ import UIKit
         }
     }
 
-    required init?(coder: NSCoder) {
+    @available(*, unavailable)
+    required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
     // MARK: - Lifecycle
 
-    public override func viewDidLoad() {
+    override public func viewDidLoad() {
         super.viewDidLoad()
 
         setupSwiftUIView()
@@ -85,7 +85,7 @@ import UIKit
 
     // MARK: - Accessibility
 
-    public override func accessibilityPerformEscape() -> Bool {
+    override public func accessibilityPerformEscape() -> Bool {
         dismissBlock?(self)
         return true
     }
@@ -112,7 +112,7 @@ import UIKit
             hosting.view.topAnchor.constraint(equalTo: view.topAnchor),
             hosting.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             hosting.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            hosting.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            hosting.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
 
         hostingController = hosting
@@ -122,7 +122,7 @@ import UIKit
 // MARK: - Objective-C Bridge
 
 @available(iOS 13.0, *)
-extension GSCXScannerSettingsHostingController {
+public extension GSCXScannerSettingsHostingController {
     /// Creates settings items from Objective-C style configuration
     /// - Parameters:
     ///   - items: Array of settings items (can be passed from Objective-C)
@@ -131,7 +131,7 @@ extension GSCXScannerSettingsHostingController {
     ///   - startContinuousScanAction: Action for start continuous scanning button
     ///   - dismissAction: Action for dismiss button
     /// - Returns: Configured hosting controller
-    @objc public static func createWithActions(
+    @objc static func createWithActions(
         initialFrame: CGRect,
         performScanAction: @escaping () -> Void,
         startContinuousScanAction: @escaping () -> Void,
